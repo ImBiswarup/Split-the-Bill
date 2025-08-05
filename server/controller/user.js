@@ -16,9 +16,11 @@ const createUser = async (req, res) => {
 
 const getUser = async (req, res) => {
     const { id } = req.params;
+    console.log(`Fetching user with ID: ${id}`);
+
     try {
         const user = await prisma.user.findUnique({
-            where: { id: parseInt(id) },
+            where: { id: id },
         });
         if (!user) {
             return res.status(404).json({ error: "User not found" });
