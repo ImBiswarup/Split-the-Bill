@@ -13,7 +13,6 @@ const createUser = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 }
-
 const getUser = async (req, res) => {
     const { id } = req.params;
     console.log(`Fetching user with ID: ${id}`);
@@ -30,9 +29,9 @@ const getUser = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 }
-
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
+    console.log(`Logging in user with email: ${email}`);
     try {
         const user = await prisma.user.findUnique({
             where: { email },
@@ -45,7 +44,6 @@ const loginUser = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 }
-
 const getAllUsers = async (req, res) => {
     try {
         const users = await prisma.user.findMany();
@@ -54,7 +52,6 @@ const getAllUsers = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 }
-
 const updateUser = async (req, res) => {
     const { id } = req.params;
     const { name, email } = req.body;
@@ -71,7 +68,6 @@ const updateUser = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 }
-
 const deleteUser = async (req, res) => {
     const { id } = req.params;
     try {
@@ -86,7 +82,6 @@ const deleteUser = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 }
-
 module.exports = {
     createUser,
     getUser,
