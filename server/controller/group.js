@@ -36,46 +36,53 @@ const createGroup = async (req, res) => {
 };
 
 const addUserToGroup = async (req, res) => {
-    let { groupId, userId } = req.body;
+    const { groupId, userId, userEmail, userName } = req.body;
 
     console.log('Adding user to group with data:', req.body);
 
-
-    if (!groupId || !userId) {
-        return res.status(400).json({ error: "Group ID and User ID are required." });
+    if (!groupId) {
+        return res.status(400).json({ error: "Group ID is required." });
     }
 
     try {
-        // Fetch group and its users
         const group = await prisma.group.findUnique({
             where: { id: groupId },
-            include: { users: true }, // Include relation
+            include: { users: true },
         });
 
         if (!group) {
             return res.status(404).json({ error: "Group not found." });
         }
 
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-        });
+        let user;
+        if (userId) {
+            user = await prisma.user.findUnique({
+                where: { id: userId },
+            });
+        } else if (userEmail) {
+            user = await prisma.user.findUnique({
+                where: { email: userEmail },
+            });
+        } else if (userName) {
+            user = await prisma.user.findFirst({
+                where: { name: userName },
+            });
+        }
 
         if (!user) {
             return res.status(404).json({ error: "User not found." });
         }
 
-        // Check if user already in group
-        const alreadyInGroup = group.users.some(u => u.id === userId);
+        const alreadyInGroup = group.users.some(u => u.id === user.id);
         if (alreadyInGroup) {
             return res.status(400).json({ error: "User is already in the group." });
         }
 
-        // Connect user to group
         await prisma.group.update({
             where: { id: groupId },
             data: {
                 users: {
-                    connect: { id: userId },
+                    connect: { id: user.id },
                 },
             },
         });

@@ -1,6 +1,5 @@
 const prisma = require('../DB/prismaClient');
 
-
 const createUser = async (req, res) => {
     const { name, email, password } = req.body;
     console.log(`Creating user with name: ${name}, email: ${email} and password: ${password}`);
@@ -19,16 +18,24 @@ const getUser = async (req, res) => {
 
     try {
         const user = await prisma.user.findUnique({
-            where: { id: id },
+            where: { id },
+            include: {
+                adminGroups: true, 
+                groups: true,      
+                bills: true,
+            },
         });
+
         if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
-        res.json(user);
+
+        return res.json(user);
     } catch (error) {
-        res.status(500).json({ error: "Internal server error" });
+        console.error("Error fetching user:", error);
+        return res.status(500).json({ error: "Internal server error" });
     }
-}
+};
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
     console.log(`Logging in user with email: ${email}`);

@@ -11,6 +11,7 @@ export async function POST(request) {
             email,
             password
         });
+        console.log(response.data);
         return NextResponse.json(response.data, { status: 200 });
     } catch (error) {
         console.error("Error logging in:", error);

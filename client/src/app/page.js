@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Home() {
-  const { user } = useAppContext();
+  const { isLoggedIn } = useAppContext();
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans">
       <section className="flex flex-col items-center justify-center text-center px-4 sm:px-6 py-24 sm:py-24 bg-gradient-to-br from-blue-100 to-blue-300">
@@ -18,7 +18,7 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <Link
             href="/auth"
-            className={`bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full text-base font-medium text-center transition ${user ? 'hidden' : '' }`}
+            className={`bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full text-base font-medium text-center transition ${isLoggedIn ? 'hidden' : ''}`}
           >
             Get Started
           </Link>

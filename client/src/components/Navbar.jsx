@@ -7,8 +7,7 @@ import { useAppContext } from '@/context/AppContext';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : {};
-
+  const { user } = useAppContext();
   const navLinks = [
     { name: 'Home', href: '/' },
     { name: 'Groups', href: '/groups' },

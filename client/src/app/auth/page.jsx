@@ -11,25 +11,25 @@ const AuthPage = () => {
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState('');
 
-    const {user, setUser} = useAppContext();
+    const { setUser } = useAppContext();
 
     const router = useRouter();
 
     const toggleMode = () => setIsLogin(!isLogin);
 
     const handleLogin = async (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
         const res = await axios.post('/api/users/login', {
             email,
             password
         });
-        setUser(res.data?.user);
-        localStorage.setItem('user', JSON.stringify(res.data?.user));
         if (res.data.error) {
             alert(res.data.error);
         }
         if (res.status === 200) {
-            alert('Login successful!');
+            console.log('Login successful!');
+            setUser(res.data.user);
+            localStorage.setItem('user', JSON.stringify(res.data.user));
             router.push(`/user/${res.data.user.id}`);
         }
     }
