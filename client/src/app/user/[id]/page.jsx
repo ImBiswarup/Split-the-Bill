@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'next/navigation';
-import { BookPlus } from 'lucide-react';
+import { BookPlus, Trash } from 'lucide-react';
 import Link from 'next/link';
 import AddUserModal from '@/components/addUser';
 import CreateGroup from '@/components/createGroup';
@@ -25,6 +25,7 @@ const UserPage = () => {
                 setError('User not found');
             } else {
                 setUserData(user);
+                console.log(`Fetched user data:`, user);
             }
         } catch (err) {
             console.error("Error fetching user:", err);
@@ -34,6 +35,22 @@ const UserPage = () => {
     useEffect(() => {
         fetchUser();
     }, [userId]);
+
+    const handleDeleteBill = async (id) => {
+        try {
+            const res = await axios.delete('/api/bills/deleteBills', {
+                data: { id }
+            });
+            setUserData((prevData) => ({
+                ...prevData,
+                bills: prevData.bills.filter(bill => bill.id !== id)
+            }));
+        } catch (error) {
+            console.error("Error deleting bill:", error);
+            setError('Failed to delete bill.');
+        }
+    };
+
 
     if (error) return <div className="text-red-500 text-center mt-10">{error}</div>;
     if (!userData) return <div className="text-center mt-10">Loading...</div>;
@@ -119,11 +136,12 @@ const UserPage = () => {
                     <ul className="list-disc pl-5 space-y-1">
                         {userData.bills?.length > 0 ? (
                             userData.bills.map((bill) => (
-                                <li key={bill.id}>
-                                    <Link href={`/bills/${bill.id}`} className="text-gray-700 hover:underline">
-                                        {bill.name || `Bill - ${bill.amount}`}
-                                    </Link>
-                                </li>
+                                <ul onClick={() => console.log(bill.id)} key={bill.id}>
+                                    <p className="text-gray-700 hover:underline flex items-center justify-between cursor-pointer my-4">
+                                        {bill.name || `${bill.description} - ${bill.amount}`}
+                                        <li onClick={() => handleDeleteBill(bill.id)}><Trash /></li>
+                                    </p>
+                                </ul>
                             ))
                         ) : (
                             <li className="text-gray-500">No bills assigned</li>

@@ -20,8 +20,8 @@ const getUser = async (req, res) => {
         const user = await prisma.user.findUnique({
             where: { id },
             include: {
-                adminGroups: true, 
-                groups: true,      
+                adminGroups: true,
+                groups: true,
                 bills: true,
             },
         });
@@ -53,7 +53,13 @@ const loginUser = async (req, res) => {
 }
 const getAllUsers = async (req, res) => {
     try {
-        const users = await prisma.user.findMany();
+        const users = await prisma.user.findMany({
+            include: {
+                adminGroups: true,
+                groups: true,
+                bills: true,
+            },
+        });
         res.json(users);
     } catch (error) {
         res.status(500).json({ error: "Internal server error" });
@@ -89,11 +95,40 @@ const deleteUser = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 }
+const createBills = async (req, res) => {
+    const { userId, amount, description } = req.body;
+    console.log(`Creating bill for user ID: ${userId}, amount: ${amount}, description: ${description}`);
+    try {
+        const bill = await prisma.bills.create({
+            data: { userId, amount, description },
+        });
+        res.status(200).json({ bill, message: "Bill created successfully" });
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error" });
+    }
+}
+const deleteBills = async (req, res) => {
+    const { id } = req.body;
+    try {
+        console.log(`Deleting bill with ID: ${id}`);
+        const bill = await prisma.bills.delete({
+            where: { id },
+        });
+        res.json({ message: "Bill deleted successfully", bill });
+    } catch (error) {
+        if (error.code === 'P2025') {
+            return res.status(404).json({ error: "Bill not found" });
+        }
+        res.status(500).json({ error: "Internal server error" });
+    }
+}
 module.exports = {
     createUser,
     getUser,
     updateUser,
     deleteUser,
     getAllUsers,
-    loginUser
+    loginUser,
+    createBills,
+    deleteBills
 };

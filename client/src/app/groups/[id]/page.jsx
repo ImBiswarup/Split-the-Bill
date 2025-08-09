@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import AddUserModal from '@/components/addUser';
+import CreateBills from '@/components/CreateBills';
 
 const GroupPage = () => {
     const { id } = useParams();
     const [group, setGroup] = useState(null);
     const [error, setError] = useState('');
     const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+    const [isCreateBillsModalOpen, setIsCreateBillsModalOpen] = useState(false);
     const router = useRouter();
 
     const fetchGroup = async () => {
@@ -21,14 +23,13 @@ const GroupPage = () => {
             setError('Failed to fetch group data.');
         }
     };
-
     useEffect(() => {
         fetchGroup();
     }, [id]);
 
     const handleUserAdded = () => {
         setIsAddUserModalOpen(false);
-        fetchGroup(); // refresh
+        fetchGroup();
     };
 
     if (error) {
@@ -42,9 +43,10 @@ const GroupPage = () => {
     return (
         <div className="max-w-4xl mx-auto px-4 py-20">
             <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md p-6 sm:p-8 space-y-6">
-                <div className="border-b pb-4">
+                <div className="border-b pb-4 flex flex-col justify-center">
                     <h1 className="text-3xl font-semibold text-gray-800 dark:text-white">{group.name}</h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-2">{group.description || 'No description'}</p>
+                    <p className="text-gray-600 dark:text-gray-400 mt-2">{`Group description : ${group.description}` || 'No description'}</p>
+                    {/* add users to group */}
                     <button
                         onClick={() => setIsAddUserModalOpen(true)}
                         className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
@@ -56,6 +58,19 @@ const GroupPage = () => {
                         onClose={handleUserAdded}
                         groupId={group.id}
                     />
+                    {/* create bills button */}
+                    <button
+                        onClick={() => setIsCreateBillsModalOpen(true)}
+                        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                    >
+                        Create Bill
+                    </button>
+                    <CreateBills
+                        isOpen={isCreateBillsModalOpen}
+                        onClose={() => setIsCreateBillsModalOpen(false)}
+                        adminId={group?.adminId}
+                    />
+
                 </div>
 
                 <div>
