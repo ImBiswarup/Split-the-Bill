@@ -3,9 +3,13 @@
 import { useAppContext } from '@/context/AppContext';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect } from 'react';
 
 export default function Home() {
-  const { isLoggedIn } = useAppContext();
+  const { isLoggedIn, user, getUserFromToken } = useAppContext();
+  useEffect(() => {
+    getUserFromToken();
+  }, []);
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans">
       <section className="flex flex-col items-center justify-center text-center px-4 sm:px-6 py-24 sm:py-24 bg-gradient-to-br from-blue-100 to-blue-300">

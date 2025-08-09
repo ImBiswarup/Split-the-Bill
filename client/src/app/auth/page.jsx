@@ -2,8 +2,10 @@
 
 import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
+import { setCookie, getCookie } from 'cookies-next/client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
 
 const AuthPage = () => {
     const [isLogin, setIsLogin] = useState(true);
@@ -18,19 +20,27 @@ const AuthPage = () => {
     const toggleMode = () => setIsLogin(!isLogin);
 
     const handleLogin = async (e) => {
-        e.preventDefault();
-        const res = await axios.post('/api/users/login', {
-            email,
-            password
-        });
-        if (res.data.error) {
-            alert(res.data.error);
-        }
-        if (res.status === 200) {
-            console.log('Login successful!');
-            setUser(res.data.user);
-            localStorage.setItem('user', JSON.stringify(res.data.user));
-            router.push(`/user/${res.data.user.id}`);
+        if (getCookie('token')) {
+            console.log('User already logged in, redirecting to user page...');
+            router.push(`/user/${getCookie('userId')}`);
+            return;
+        } else {
+            e.preventDefault();
+            const res = await axios.post('/api/users/login', {
+                email,
+                password
+            });
+            if (res.data.error) {
+                alert(res.data.error);
+            }
+            if (res.status === 200) {
+                console.log('Login successful!');
+                console.log('User data:', res.data);
+                setCookie('token', res.data.token);
+                console.log('Token:', getCookie('token'));
+                setUser(res.data.user);
+                router.push(`/user/${res.data.user.id}`);
+            }
         }
     }
 

@@ -1,11 +1,24 @@
 const prisma = require('../DB/prismaClient');
-
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const createUser = async (req, res) => {
     const { name, email, password } = req.body;
     console.log(`Creating user with name: ${name}, email: ${email} and password: ${password}`);
+    const existingUser = await prisma.user.findUnique({
+        where: { email }
+    });
+    if (existingUser) {
+        return res.status(409).json({ error: "User already exists" });
+    }
+
+    if (!name || !email || !password) {
+        return res.status(400).json({ error: "Name, email, and password are required" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
     try {
         const user = await prisma.user.create({
-            data: { name, email, password },
+            data: { name, email, password: hashedPassword },
         });
         res.status(201).json(user);
     } catch (error) {
@@ -39,18 +52,53 @@ const getUser = async (req, res) => {
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
     console.log(`Logging in user with email: ${email}`);
+
+    if (!email || !password) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+
     try {
         const user = await prisma.user.findUnique({
             where: { email },
+            include: {
+                adminGroups: true,
+                groups: true,
+                bills: true,
+            },
         });
-        if (!user || user.password !== password) {
+
+        if (!user || !user.password || !(await bcrypt.compare(password, user.password))) {
             return res.status(401).json({ error: "Invalid email or password" });
         }
-        res.json({ message: "Login successful", user });
+
+        if (!process.env.JWT_SECRET) {
+            console.error("JWT_SECRET not defined in environment variables");
+            return res.status(500).json({ error: "Internal server error" });
+        }
+
+        const tokenPayload = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            isAdmin: user.isAdmin,
+            adminGroups: user.adminGroups,
+            userGroups: user.groups,
+            groups: user.groups,
+            bills: user.bills,
+        };
+
+        const token = jwt.sign(tokenPayload, process.env.JWT_SECRET);
+
+        const { password: _, ...safeUser } = user;
+
+        res.json({ message: "Login successful", token, user: safeUser });
+
     } catch (error) {
+        console.error("Error logging in user:", error);
         res.status(500).json({ error: "Internal server error" });
     }
-}
+};
+
 const getAllUsers = async (req, res) => {
     try {
         const users = await prisma.user.findMany({

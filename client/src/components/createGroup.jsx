@@ -1,7 +1,7 @@
 'use client';
 
 import axios from 'axios';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 const CreateGroup = ({ isOpen, onClose, adminId }) => {
@@ -13,6 +13,7 @@ const CreateGroup = ({ isOpen, onClose, adminId }) => {
 
     const params = useParams();
     const userId = params.id;
+    const router = useRouter();
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -33,6 +34,7 @@ const CreateGroup = ({ isOpen, onClose, adminId }) => {
                 setTimeout(() => {
                     onClose();
                 }, 1000);
+                window.location.reload();
             } else {
                 setError('Failed to create group.');
             }

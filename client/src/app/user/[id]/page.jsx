@@ -5,8 +5,8 @@ import axios from 'axios';
 import { useParams } from 'next/navigation';
 import { BookPlus, Trash } from 'lucide-react';
 import Link from 'next/link';
-import AddUserModal from '@/components/addUser';
 import CreateGroup from '@/components/createGroup';
+import { useAppContext } from '@/context/AppContext';
 
 const UserPage = () => {
     const [userData, setUserData] = useState(null);
@@ -14,6 +14,10 @@ const UserPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const params = useParams();
     const userId = params.id;
+    const {getUserFromToken} = useAppContext();
+    useEffect(() => {
+        getUserFromToken();
+    }, []);
 
     const fetchUser = async () => {
         try {
@@ -25,7 +29,6 @@ const UserPage = () => {
                 setError('User not found');
             } else {
                 setUserData(user);
-                console.log(`Fetched user data:`, user);
             }
         } catch (err) {
             console.error("Error fetching user:", err);
