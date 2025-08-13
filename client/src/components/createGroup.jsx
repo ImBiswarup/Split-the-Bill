@@ -1,7 +1,7 @@
 'use client';
 
 import axios from 'axios';
-import { useParams, useRouter } from 'next/navigation';
+// import { useParams, useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 const CreateGroup = ({ isOpen, onClose, adminId }) => {
@@ -11,9 +11,9 @@ const CreateGroup = ({ isOpen, onClose, adminId }) => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    const params = useParams();
-    const userId = params.id;
-    const router = useRouter();
+    // const params = useParams();
+    // const userId = params.id;
+    // const router = useRouter();
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -24,7 +24,7 @@ const CreateGroup = ({ isOpen, onClose, adminId }) => {
             const res = await axios.post('/api/groups/createGroup', {
                 name,
                 description,
-                adminId: userId
+                adminId: adminId
             });
 
             if (res.status === 201) {

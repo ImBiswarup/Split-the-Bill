@@ -98,7 +98,6 @@ const loginUser = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 };
-
 const getAllUsers = async (req, res) => {
     try {
         const users = await prisma.user.findMany({
@@ -144,17 +143,55 @@ const deleteUser = async (req, res) => {
     }
 }
 const createBills = async (req, res) => {
-    const { userId, amount, description } = req.body;
-    console.log(`Creating bill for user ID: ${userId}, amount: ${amount}, description: ${description}`);
+    const { ownerId, amount, description } = req.body;
+    console.log(`Creating bill for user ID: ${ownerId}, amount: ${amount}, description: ${description}`);
     try {
         const bill = await prisma.bills.create({
-            data: { userId, amount, description },
+            data: { ownerId, amount, description },
         });
         res.status(200).json({ bill, message: "Bill created successfully" });
     } catch (error) {
         res.status(500).json({ error: "Internal server error" });
     }
 }
+const splitBillAmongUsers = async (req, res) => {
+    const { billId, userIds } = req.body;
+    try {
+        const bill = await prisma.bills.findUnique({ where: { id: billId } });
+
+        if (!bill) {
+            return res.status(404).json({ error: "Bill not found" });
+        }
+
+        const splitAmount = bill.amount / userIds.length;
+
+        // Save split records
+        const splits = userIds.map(userId => ({
+            userId,
+            billId,
+            amount: splitAmount,
+        }));
+        await prisma.billSplit.createMany({ data: splits });
+
+        // Add the split amount to each user's own bills
+        await Promise.all(
+            userIds.map(userId =>
+                prisma.bills.create({
+                    data: {
+                        ownerId: userId, // using your schema's required ownerId
+                        amount: splitAmount,
+                        description: `Share of bill #${billId}`,
+                    },
+                })
+            )
+        );
+
+        res.status(200).json({ message: "Bill split successfully", splits });
+    } catch (error) {
+        console.error("Error splitting bill:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
 const deleteBills = async (req, res) => {
     const { id } = req.body;
     try {
@@ -178,5 +215,6 @@ module.exports = {
     getAllUsers,
     loginUser,
     createBills,
-    deleteBills
+    deleteBills,
+    splitBillAmongUsers
 };

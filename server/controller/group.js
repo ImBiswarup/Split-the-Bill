@@ -34,7 +34,6 @@ const createGroup = async (req, res) => {
         res.status(500).json({ error: "Failed to create group." });
     }
 };
-
 const addUserToGroup = async (req, res) => {
     const { groupId, userId, userEmail, userName } = req.body;
 
@@ -93,7 +92,6 @@ const addUserToGroup = async (req, res) => {
         res.status(500).json({ error: "Failed to add user to group." });
     }
 };
-
 const getGroup = async (req, res) => {
     const { id } = req.params;
     try {
@@ -127,7 +125,6 @@ const getGroup = async (req, res) => {
         res.status(500).json({ error: "Failed to retrieve group" });
     }
 };
-
 const updateGroup = async (req, res) => {
     const { id } = req.params;
     const { name, description } = req.body;
@@ -144,7 +141,6 @@ const updateGroup = async (req, res) => {
         res.status(500).json({ error: "Failed to update group" });
     }
 }
-
 const deleteGroup = async (req, res) => {
     const { id } = req.params;
     try {

@@ -4,7 +4,8 @@ const { createUser,
     updateUser,
     deleteUser, getAllUsers, loginUser, 
     createBills,
-    deleteBills} = require('../controller/user');
+    deleteBills,
+    splitBillAmongUsers} = require('../controller/user');
 
 router.post('/create', createUser);
 router.get('/all', getAllUsers);
@@ -15,5 +16,6 @@ router.delete('/delete/:id', deleteUser);
 
 router.post('/bills/create', createBills);
 router.delete('/bills/delete', deleteBills);
+router.post('/bills/split', splitBillAmongUsers);
 
 module.exports = router;

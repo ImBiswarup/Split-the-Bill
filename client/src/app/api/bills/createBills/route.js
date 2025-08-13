@@ -14,7 +14,7 @@ export async function POST(req) {
         console.log(`Creating bill with payload:`, { userId, amount: parsedAmount, description });
 
         const res = await axios.post('http://localhost:3000/api/users/bills/create', {
-            userId,
+            ownerId: userId,
             amount: parsedAmount,
             description
         });

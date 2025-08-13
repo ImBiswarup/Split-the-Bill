@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req, res) {
     const { name, description, adminId } = await req.json();
+    console.log(`Creating group with data:`, { name, description, adminId });
 
     if (!name || !description || !adminId) {
         return NextResponse.json({ error: 'All fields are required.' }, { status: 400 });

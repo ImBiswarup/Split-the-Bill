@@ -29,6 +29,7 @@ const UserPage = () => {
                 setError('User not found');
             } else {
                 setUserData(user);
+                console.log(user);
             }
         } catch (err) {
             console.error("Error fetching user:", err);
