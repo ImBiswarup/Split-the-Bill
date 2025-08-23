@@ -1,7 +1,6 @@
 import axios from "axios";
 import { NextResponse } from "next/server";
 
-
 export async function POST(req, res) {
     const { name, description, adminId } = await req.json();
     console.log(`Creating group with data:`, { name, description, adminId });
@@ -11,7 +10,8 @@ export async function POST(req, res) {
     }
 
     try {
-        const res = await axios.post('http://localhost:3000/api/groups/create', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const res = await axios.post(`${apiUrl}/api/groups/create`, {
             name,
             description,
             adminId

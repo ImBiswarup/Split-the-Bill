@@ -8,7 +8,8 @@ export async function GET(req) {
   console.log(`Fetching user with ID: ${id}`);
 
   try {
-    const response = await axios.get(`http://localhost:3000/api/users/${id}`); 
+    // Use relative URL instead of hardcoded localhost
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${id}`); 
     return NextResponse.json(response.data);
   } catch (error) {
     console.error("Error fetching user:", error.message);

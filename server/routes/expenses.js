@@ -1,8 +1,9 @@
 const router = require('express').Router();
-const { ceateExpenses, getAllExpenses, deleteExpense, updateExpense } = require('../controller/expenses');
+const { createExpenses, getAllExpenses, deleteExpense, updateExpense, getExpenseById } = require('../controller/expenses');
 
-router.post('/create', ceateExpenses);
+router.post('/create', createExpenses);
 router.get('/', getAllExpenses);
+router.get('/:id', getExpenseById);
 router.put('/:id', updateExpense);
 router.delete('/:id', deleteExpense);
 

@@ -7,7 +7,8 @@ export async function POST(request) {
         return NextResponse.json({ error: "Email, password, and full name are required." }, { status: 400 });
     }
     try {
-        const response = await axios.post('http://localhost:3000/api/users/create', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        const response = await axios.post(`${apiUrl}/api/users/create`, {
             email,
             password,
             name: fullName

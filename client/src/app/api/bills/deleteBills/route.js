@@ -11,7 +11,8 @@ export async function DELETE(request) {
     }
 
     try {
-        const res = await axios.delete(`http://localhost:3000/api/users/bills/delete`, {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        const res = await axios.delete(`${apiUrl}/api/users/bills/delete`, {
             data: { id: id },
         });
         console.log(`Bill with ID ${id} deleted successfully`, res.data);
