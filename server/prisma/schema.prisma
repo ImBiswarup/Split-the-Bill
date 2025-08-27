@@ -13,7 +13,7 @@ model User {
   email       String      @unique
   password    String
   isAdmin     Boolean     @default(false)
-  bills       Bills[]     @relation("BillOwner") 
+  bills       Bills[]     @relation("BillOwner")
   billSplits  BillSplit[]
   adminGroups Group[]     @relation("GroupAdmin")
   groups      Group[]     @relation("GroupUsers")
@@ -30,15 +30,17 @@ model Expenses {
 }
 
 model Bills {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   ownerId     String
+  groupId     String? // Optional field to link bills to groups
   amount      Float
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  owner  User        @relation("BillOwner", fields: [ownerId], references: [id])
-  splits BillSplit[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  isPaid      Boolean     @default(false)
+  owner       User        @relation("BillOwner", fields: [ownerId], references: [id])
+  group       Group?      @relation("GroupBills", fields: [groupId], references: [id])
+  splits      BillSplit[]
 }
 
 model BillSplit {
@@ -46,10 +48,10 @@ model BillSplit {
   billId String
   userId String
   amount Float
+  isPaid Boolean @default(false) 
   bill   Bills   @relation(fields: [billId], references: [id])
   user   User    @relation(fields: [userId], references: [id])
 }
-
 
 model Group {
   id          String   @id @default(cuid())
@@ -60,5 +62,6 @@ model Group {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  users User[] @relation("GroupUsers")
+  users User[]  @relation("GroupUsers")
+  bills Bills[] @relation("GroupBills") // Add relation to bills
 }

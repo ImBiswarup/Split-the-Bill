@@ -111,6 +111,31 @@ const getGroup = async (req, res) => {
                         name: true,
                         email: true,
                     }
+                },
+                bills: {
+                    include: {
+                        owner: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true,
+                            }
+                        },
+                        splits: {
+                            include: {
+                                user: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        email: true,
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    orderBy: {
+                        createdAt: 'desc'
+                    }
                 }
             },
         });
@@ -155,11 +180,118 @@ const deleteGroup = async (req, res) => {
         res.status(500).json({ error: "Failed to delete group" });
     }
 }
+const createGroupBill = async (req, res) => {
+    const { id: groupId } = req.params;
+    const { ownerId, amount, description } = req.body;
+
+    console.log('Creating group bill with data:', { groupId, ownerId, amount, description });
+
+    if (!ownerId || !amount || !description) {
+        return res.status(400).json({ error: "Owner ID, amount, and description are required." });
+    }
+
+    try {
+        // Verify the group exists and get its members
+        const group = await prisma.group.findUnique({
+            where: { id: groupId },
+            include: {
+                users: true,
+                admin: true
+            }
+        });
+
+        if (!group) {
+            return res.status(404).json({ error: "Group not found." });
+        }
+
+        // Verify the owner is part of the group
+        const isOwnerInGroup = group.users.some(user => user.id === ownerId) || group.admin.id === ownerId;
+        if (!isOwnerInGroup) {
+            return res.status(403).json({ error: "Owner must be a member of the group." });
+        }
+
+        // Create the main bill
+        const bill = await prisma.bills.create({
+            data: {
+                ownerId,
+                groupId,
+                amount: parseFloat(amount),
+                description
+            }
+        });
+
+        // Get all group members (including admin)
+        const allMembers = [...group.users, group.admin];
+        const memberCount = allMembers.length;
+
+        if (memberCount === 0) {
+            return res.status(400).json({ error: "Group has no members to split the bill with." });
+        }
+
+        // Calculate split amount per member
+        const splitAmount = parseFloat(amount) / memberCount;
+
+        // Create bill splits for each member
+        const billSplits = await Promise.all(
+            allMembers.map(member => 
+                prisma.billSplit.create({
+                    data: {
+                        billId: bill.id,
+                        userId: member.id,
+                        amount: splitAmount
+                    }
+                })
+            )
+        );
+
+        // Get the created bill with splits
+        const billWithSplits = await prisma.bills.findUnique({
+            where: { id: bill.id },
+            include: {
+                owner: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true
+                    }
+                },
+                group: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                },
+                splits: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        res.status(201).json({ 
+            bill: billWithSplits, 
+            message: "Group bill created and split successfully",
+            splitAmount: splitAmount,
+            memberCount: memberCount
+        });
+    } catch (error) {
+        console.error("Error creating group bill:", error);
+        res.status(500).json({ error: "Failed to create group bill." });
+    }
+};
 
 module.exports = {
     createGroup,
     getGroup,
     updateGroup,
     deleteGroup,
-    addUserToGroup
+    addUserToGroup,
+    createGroupBill
 };

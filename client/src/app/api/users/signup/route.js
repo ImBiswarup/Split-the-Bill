@@ -2,16 +2,17 @@ import axios from "axios";
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
-    const { email, password, fullName } = await request.json();
-    if (!email || !password || !fullName) {
+    const { email, password, name } = await request.json();
+    console.log('signup route hit', { email, password, name });
+
+    if (!email || !password || !name) {
         return NextResponse.json({ error: "Email, password, and full name are required." }, { status: 400 });
     }
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-        const response = await axios.post(`${apiUrl}/api/users/create`, {
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/users/create`, {
             email,
             password,
-            name: fullName
+            name
         });
         return NextResponse.json(response.data, { status: 201 });
     } catch (error) {

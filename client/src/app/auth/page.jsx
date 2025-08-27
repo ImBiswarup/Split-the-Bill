@@ -2,7 +2,7 @@
 
 import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
-import { setCookie, getCookie } from 'cookies-next/client';
+import { setCookie, getCookie } from 'cookies-next'; // FIXED: Removed /client
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Eye, EyeOff, Lock, Mail, User, Shield, ArrowRight, CheckCircle } from 'lucide-react';
@@ -29,8 +29,11 @@ const AuthPage = () => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        if (getCookie('token')) {
-            console.log('User already logged in, redirecting to user page...');
+
+        // Prevent duplicate login attempts
+        const existingToken = getCookie('token');
+        if (existingToken) {
+            console.log('User already logged in, redirecting...');
             router.push(`/user/${getCookie('userId')}`);
             return;
         }
@@ -44,22 +47,23 @@ const AuthPage = () => {
         setError('');
 
         try {
-            const res = await axios.post('/api/users/login', {
-                email,
-                password
-            });
-            
+            const res = await axios.post('/api/users/login', { email, password });
+
             if (res.data.error) {
                 setError(res.data.error);
                 return;
             }
-            
+
             if (res.status === 200) {
-                console.log('Login successful!');
-                console.log('User data:', res.data);
-                setCookie('token', res.data.token);
-                console.log('Token:', getCookie('token'));
+                console.log('Login successful!', res.data);
+
+                // Store token and userId in cookies (valid for 1 day)
+                setCookie('token', res.data.token, { maxAge: 60 * 60 * 24 });
+                setCookie('userId', res.data.user.id, { maxAge: 60 * 60 * 24 });
+
+                // Update global user context
                 setUser(res.data.user);
+
                 router.push(`/user/${res.data.user.id}`);
             }
         } catch (err) {
@@ -72,7 +76,7 @@ const AuthPage = () => {
 
     const handleSignup = async (e) => {
         e.preventDefault();
-        
+
         if (!email || !password || !fullName) {
             setError('Please fill in all fields');
             return;
@@ -87,20 +91,21 @@ const AuthPage = () => {
         setError('');
 
         try {
-            const res = await axios.post('/api/users/signup', {
+            const signupPayload = {
                 email,
                 password,
                 name: fullName
-            });
-            
+            }
+            console.log('Signup payload:', signupPayload);
+            const res = await axios.post('/api/users/signup', signupPayload);
+
             if (res.data.error) {
                 setError(res.data.error);
                 return;
             }
-            
+
             if (res.status === 201) {
-                setError('');
-                alert('Signup successful! Please login.');
+                alert('Signup successful! Please log in.');
                 setIsLogin(true);
                 setEmail('');
                 setPassword('');
@@ -135,19 +140,19 @@ const AuthPage = () => {
                                 MoneySplit
                             </span>
                         </div>
-                        
+
                         <h1 className="text-4xl font-bold text-gray-900 mb-6 leading-tight">
                             The Smartest Way to
                             <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                                 Split Expenses
                             </span>
                         </h1>
-                        
+
                         <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                            Stop arguing over who owes what. Track group expenses, settle up instantly, 
+                            Stop arguing over who owes what. Track group expenses, settle up instantly,
                             and maintain perfect financial harmony.
                         </p>
-                        
+
                         <div className="space-y-4">
                             {features.map((feature, index) => (
                                 <div key={index} className="flex items-center space-x-3">
@@ -156,7 +161,7 @@ const AuthPage = () => {
                                 </div>
                             ))}
                         </div>
-                        
+
                         <div className="mt-8 p-6 bg-white/50 backdrop-blur-sm rounded-2xl border border-white/20">
                             <div className="flex items-center space-x-3 mb-3">
                                 <Shield size={20} className="text-blue-600" />
@@ -172,7 +177,6 @@ const AuthPage = () => {
                 {/* Right Side - Auth Form */}
                 <div className="w-full max-w-md mx-auto text-black">
                     <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-8">
-                        {/* Header */}
                         <div className="text-center mb-8">
                             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                                 {isLogin ? <Lock size={28} className="text-white" /> : <User size={28} className="text-white" />}
@@ -185,14 +189,12 @@ const AuthPage = () => {
                             </p>
                         </div>
 
-                        {/* Error Message */}
                         {error && (
                             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
                                 <p className="text-red-700 text-sm">{error}</p>
                             </div>
                         )}
 
-                        {/* Form */}
                         <form className="space-y-6" onSubmit={isLogin ? handleLogin : handleSignup}>
                             {!isLogin && (
                                 <div>
@@ -212,7 +214,7 @@ const AuthPage = () => {
                                     </div>
                                 </div>
                             )}
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Email Address
@@ -229,7 +231,7 @@ const AuthPage = () => {
                                     />
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Password
@@ -253,7 +255,7 @@ const AuthPage = () => {
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <button
                                 type="submit"
                                 disabled={loading}
@@ -273,7 +275,6 @@ const AuthPage = () => {
                             </button>
                         </form>
 
-                        {/* Divider */}
                         <div className="my-6">
                             <div className="relative">
                                 <div className="absolute inset-0 flex items-center">
@@ -285,7 +286,6 @@ const AuthPage = () => {
                             </div>
                         </div>
 
-                        {/* Google Sign In */}
                         <button
                             className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 py-3 rounded-xl hover:border-blue-300 hover:bg-blue-50 text-gray-700 font-medium transition-all duration-200 group"
                             onClick={() => alert('Google login not implemented yet')}
@@ -294,12 +294,11 @@ const AuthPage = () => {
                             Continue with Google
                         </button>
 
-                        {/* Toggle Mode */}
                         <div className="mt-8 text-center">
                             <p className="text-gray-600">
                                 {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
-                                <button 
-                                    onClick={toggleMode} 
+                                <button
+                                    onClick={toggleMode}
                                     className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200"
                                 >
                                     {isLogin ? 'Sign up' : 'Sign in'}
@@ -307,7 +306,6 @@ const AuthPage = () => {
                             </p>
                         </div>
 
-                        {/* Terms */}
                         <div className="mt-6 text-center">
                             <p className="text-xs text-gray-500">
                                 By continuing, you agree to our{' '}

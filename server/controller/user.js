@@ -1,6 +1,7 @@
 const prisma = require('../DB/prismaClient');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+
 const createUser = async (req, res) => {
     const { name, email, password } = req.body;
     console.log(`Creating user with name: ${name}, email: ${email} and password: ${password}`);
@@ -12,7 +13,7 @@ const createUser = async (req, res) => {
     }
 
     if (!name || !email || !password) {
-        return res.status(400).json({ error: "Name, email, and password are required" });
+        return res.status(400).json({ error: "name, email, and password are required" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);

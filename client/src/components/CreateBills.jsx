@@ -2,14 +2,15 @@
 
 import axios from 'axios';
 import React, { useState } from 'react';
-import { X, Receipt, DollarSign, FileText } from 'lucide-react';
+import { X, Receipt, DollarSign, FileText, Users, Split } from 'lucide-react';
 
-const CreateBills = ({ isOpen, onClose, adminId }) => {
+const CreateBills = ({ isOpen, onClose, adminId, groupId, groupMembers = [] }) => {
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [billType, setBillType] = useState(groupId ? 'group' : 'individual'); // Default based on props
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -18,21 +19,41 @@ const CreateBills = ({ isOpen, onClose, adminId }) => {
         setSuccess('');
 
         try {
-            const payload = {
-                userId : adminId,
-                amount: amount,
-                description,
-            };
+            let payload;
+            let endpoint;
+
+            if (billType === 'group' && groupId) {
+                // Group bill - will be automatically split
+                payload = {
+                    ownerId: adminId,
+                    amount: amount,
+                    description,
+                };
+                endpoint = `/api/groups/${groupId}/bills`;
+            } else {
+                // Individual bill
+                payload = {
+                    userId: adminId,
+                    amount: amount,
+                    description,
+                };
+                endpoint = '/api/bills/createBills';
+            }
             
-            const res = await axios.post('/api/bills/createBills', payload);
+            const res = await axios.post(endpoint, payload);
 
             if (res.status === 200) {
-                setSuccess('Bill created successfully!');
+                if (billType === 'group') {
+                    const { splitAmount, memberCount } = res.data;
+                    setSuccess(`Group bill created successfully! Split among ${memberCount} members: $${splitAmount.toFixed(2)} each`);
+                } else {
+                    setSuccess('Bill created successfully!');
+                }
                 setAmount('');
                 setDescription('');
                 setTimeout(() => {
                     onClose();
-                }, 1000);
+                }, 2000);
             } else {
                 setError('Failed to create bill.');
             }
@@ -45,6 +66,10 @@ const CreateBills = ({ isOpen, onClose, adminId }) => {
 
     if (!isOpen) return null;
 
+    const isGroupBill = billType === 'group' && groupId;
+    const totalMembers = groupMembers.length + 1; // +1 for admin
+    const splitAmount = amount ? (parseFloat(amount) / totalMembers) : 0;
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg mx-4 transform transition-all duration-300 scale-100">
@@ -56,7 +81,9 @@ const CreateBills = ({ isOpen, onClose, adminId }) => {
                         </div>
                         <div>
                             <h2 className="text-2xl font-bold text-gray-900">Create Bill</h2>
-                            <p className="text-gray-600 text-sm">Add a new expense to track</p>
+                            <p className="text-gray-600 text-sm">
+                                {isGroupBill ? 'Add a new group expense' : 'Add a new personal expense'}
+                            </p>
                         </div>
                     </div>
                     <button
@@ -67,6 +94,39 @@ const CreateBills = ({ isOpen, onClose, adminId }) => {
                     </button>
                 </div>
 
+                {/* Bill Type Selection (only show if both options are available) */}
+                {groupId && (
+                    <div className="mb-6">
+                        <label className="block text-sm font-semibold text-gray-700 mb-3">Bill Type</label>
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setBillType('individual')}
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+                                    billType === 'individual'
+                                        ? 'bg-blue-500 text-white shadow-lg'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                            >
+                                <Receipt size={16} />
+                                Personal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setBillType('group')}
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+                                    billType === 'group'
+                                        ? 'bg-green-500 text-white shadow-lg'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                            >
+                                <Users size={16} />
+                                Group
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
@@ -76,7 +136,7 @@ const CreateBills = ({ isOpen, onClose, adminId }) => {
                         </label>
                         <input
                             type="text"
-                            placeholder="What was this expense for?"
+                            placeholder={isGroupBill ? "What was this group expense for?" : "What was this expense for?"}
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-black placeholder-gray-400 bg-white"
@@ -104,6 +164,21 @@ const CreateBills = ({ isOpen, onClose, adminId }) => {
                         </div>
                     </div>
 
+                    {/* Group Bill Split Preview */}
+                    {isGroupBill && amount && (
+                        <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Split size={16} className="text-green-600" />
+                                <span className="font-semibold text-green-800">Split Preview</span>
+                            </div>
+                            <div className="text-sm text-green-700">
+                                <p>Total: <span className="font-semibold">${parseFloat(amount).toFixed(2)}</span></p>
+                                <p>Members: <span className="font-semibold">{totalMembers}</span></p>
+                                <p>Each person pays: <span className="font-semibold">${splitAmount.toFixed(2)}</span></p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Error/Success Messages */}
                     {error && (
                         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
@@ -128,7 +203,7 @@ const CreateBills = ({ isOpen, onClose, adminId }) => {
                                 Creating Bill...
                             </div>
                         ) : (
-                            'Create Bill'
+                            isGroupBill ? 'Create Group Bill' : 'Create Bill'
                         )}
                     </button>
                 </form>

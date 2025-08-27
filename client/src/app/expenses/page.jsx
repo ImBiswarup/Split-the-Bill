@@ -308,7 +308,7 @@ const ExpensesPage = () => {
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full">
+                            <table className="w-full hidden sm:table">
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
@@ -408,6 +408,91 @@ const ExpensesPage = () => {
                                     ))}
                                 </tbody>
                             </table>
+
+                            {/* Mobile card list */}
+                            <div className="sm:hidden divide-y divide-gray-100">
+                                {filteredExpenses.map((expense) => (
+                                    <div key={expense.id} className="p-4">
+                                        {editingId === expense.id ? (
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-1">Description</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editForm.description}
+                                                        onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-1">Amount</label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0.01"
+                                                            value={editForm.amount}
+                                                            onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
+                                                            className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs text-gray-500">{new Date(expense.createdAt).toLocaleDateString()}</span>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={handleSaveEdit}
+                                                            className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm"
+                                                        >
+                                                            Save
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setEditingId(null)}
+                                                            className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                        <FileText size={20} className="text-blue-600" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-medium text-gray-900">{expense.description}</div>
+                                                        <div className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                                                            <Calendar size={14} /> {new Date(expense.createdAt).toLocaleDateString()}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-base font-semibold text-gray-900">${expense.amount.toFixed(2)}</div>
+                                                    <div className="flex gap-2 justify-end mt-2">
+                                                        <button
+                                                            onClick={() => handleEdit(expense)}
+                                                            className="p-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+                                                            title="Edit"
+                                                        >
+                                                            <Edit size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDelete(expense.id)}
+                                                            className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                                                            title="Delete"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
