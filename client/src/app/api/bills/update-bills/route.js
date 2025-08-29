@@ -6,7 +6,7 @@ export async function PUT(request) {
     // console.log('Received data for updating payment:', { billId, userId, status, amount });
 
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        const apiUrl =  process.env.NEXT_PUBLIC_API_URL;
 
         const response = await axios.put(
             `${apiUrl}/api/payments/update`,

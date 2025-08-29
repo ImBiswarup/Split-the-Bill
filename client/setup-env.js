@@ -33,7 +33,7 @@ try {
   console.log('   You can now edit .env to customize your configuration.\n');
   
   console.log('📝 Current configuration:');
-  console.log('   NEXT_PUBLIC_API_URL=http://localhost:3000\n');
+  console.log('   NEXT_PUBLIC_API_URL=https://money-splitter-backend-7.onrender.com\n');
   
   console.log('💡 Next steps:');
   console.log('   1. Edit .env if you need to change the backend URL');

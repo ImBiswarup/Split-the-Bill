@@ -11,7 +11,7 @@ export async function POST(req) {
     }
 
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        const apiUrl =  process.env.NEXT_PUBLIC_API_URL;
         const res = await axios.post(`${apiUrl}/api/groups/add`, {
             groupId,
             userEmail,

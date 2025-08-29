@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function GET(request, { params }) {
     try {
         const { id } = await params;
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        const apiUrl =  process.env.NEXT_PUBLIC_API_URL;
         const res = await axios.get(`${apiUrl}/api/groups/${id}`);
         return NextResponse.json(res.data);
     } catch (error) {

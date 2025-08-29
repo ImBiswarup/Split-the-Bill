@@ -2,10 +2,11 @@
 
 import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
-import { setCookie, getCookie } from 'cookies-next'; // FIXED: Removed /client
+import { setCookie, getCookie } from 'cookies-next';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { Eye, EyeOff, Lock, Mail, User, Shield, ArrowRight, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
+import { Eye, EyeOff, Lock, Mail, User, Shield, ArrowRight, CheckCircle, Sparkles, Zap, TrendingUp, Users } from 'lucide-react';
 
 const AuthPage = () => {
     const [isLogin, setIsLogin] = useState(true);
@@ -18,6 +19,15 @@ const AuthPage = () => {
 
     const { setUser } = useAppContext();
     const router = useRouter();
+    const { data: session } = useSession();
+
+    // Auto-login when Google session is active
+    useEffect(() => {
+        if (session?.user) {
+            setUser(session.user);
+            router.push(`/user/${session.user.id || session.user.email}`);
+        }
+    }, [session]);
 
     const toggleMode = () => {
         setIsLogin(!isLogin);
@@ -30,10 +40,8 @@ const AuthPage = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
 
-        // Prevent duplicate login attempts
         const existingToken = getCookie('token');
         if (existingToken) {
-            console.log('User already logged in, redirecting...');
             router.push(`/user/${getCookie('userId')}`);
             return;
         }
@@ -55,19 +63,12 @@ const AuthPage = () => {
             }
 
             if (res.status === 200) {
-                console.log('Login successful!', res.data);
-
-                // Store token and userId in cookies (valid for 1 day)
                 setCookie('token', res.data.token, { maxAge: 60 * 60 * 24 });
                 setCookie('userId', res.data.user.id, { maxAge: 60 * 60 * 24 });
-
-                // Update global user context
                 setUser(res.data.user);
-
                 router.push(`/user/${res.data.user.id}`);
             }
         } catch (err) {
-            console.error('Login error:', err);
             setError(err.response?.data?.error || 'Login failed. Please try again.');
         } finally {
             setLoading(false);
@@ -91,13 +92,11 @@ const AuthPage = () => {
         setError('');
 
         try {
-            const signupPayload = {
+            const res = await axios.post('/api/users/signup', {
                 email,
                 password,
                 name: fullName
-            }
-            console.log('Signup payload:', signupPayload);
-            const res = await axios.post('/api/users/signup', signupPayload);
+            });
 
             if (res.data.error) {
                 setError(res.data.error);
@@ -112,7 +111,6 @@ const AuthPage = () => {
                 setFullName('');
             }
         } catch (err) {
-            console.error('Signup error:', err);
             setError(err.response?.data?.error || 'Signup failed. Please try again.');
         } finally {
             setLoading(false);
@@ -120,146 +118,200 @@ const AuthPage = () => {
     };
 
     const features = [
-        "Split expenses with friends and family",
-        "Track shared bills and payments",
-        "Generate detailed expense reports",
-        "Secure and private data handling"
+        {
+            icon: <Zap className="w-6 h-6 text-yellow-500" />,
+            title: "Lightning Fast",
+            description: "Split expenses in seconds, not minutes"
+        },
+        {
+            icon: <TrendingUp className="w-6 h-6 text-green-500" />,
+            title: "Smart Analytics",
+            description: "Track spending patterns and trends"
+        },
+        {
+            icon: <Users className="w-6 h-6 text-blue-500" />,
+            title: "Group Management",
+            description: "Organize expenses by groups and categories"
+        },
+        {
+            icon: <Shield className="w-6 h-6 text-purple-500" />,
+            title: "Secure & Private",
+            description: "Bank-level security for your financial data"
+        }
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-12 items-center">
-                {/* Left Side - Features */}
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
+            <div className="w-full max-w-7xl grid lg:grid-cols-2 gap-16 items-center">
+                {/* Left Side - Features & Branding */}
                 <div className="hidden lg:block">
-                    <div className="max-w-md">
-                        <div className="flex items-center space-x-2 mb-8">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-lg">$</span>
+                    <div className="max-w-lg">
+                        {/* Brand Header */}
+                        <div className="flex items-center space-x-3 mb-12">
+                            <div className="relative">
+                                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                                    <span className="text-white font-bold text-xl">$</span>
+                                </div>
+                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                                    <Sparkles className="w-2.5 h-2.5 text-white" />
+                                </div>
                             </div>
-                            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                MoneySplit
-                            </span>
+                            <div>
+                                <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
+                                    MoneySplit
+                                </h1>
+                                <p className="text-sm text-slate-600 font-medium">Pro Edition</p>
+                            </div>
                         </div>
 
-                        <h1 className="text-4xl font-bold text-gray-900 mb-6 leading-tight">
-                            The Smartest Way to
-                            <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                Split Expenses
+                        {/* Main Headline */}
+                        <h2 className="text-5xl font-bold text-slate-900 mb-8 leading-tight">
+                            Split Expenses
+                            <span className="block bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                                Like a Pro
                             </span>
-                        </h1>
+                        </h2>
 
-                        <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                            Stop arguing over who owes what. Track group expenses, settle up instantly,
-                            and maintain perfect financial harmony.
+                        <p className="text-xl text-slate-600 mb-12 leading-relaxed">
+                            The ultimate expense management platform for groups, families, and roommates. 
+                            Stop arguing over bills and start living in financial harmony.
                         </p>
 
-                        <div className="space-y-4">
+                        {/* Feature Grid */}
+                        <div className="grid grid-cols-2 gap-6 mb-12">
                             {features.map((feature, index) => (
-                                <div key={index} className="flex items-center space-x-3">
-                                    <CheckCircle size={20} className="text-green-500 flex-shrink-0" />
-                                    <span className="text-gray-700">{feature}</span>
+                                <div key={index} className="p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/40 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+                                    <div className="flex items-center space-x-3 mb-2">
+                                        {feature.icon}
+                                        <h3 className="font-semibold text-slate-800 text-sm">{feature.title}</h3>
+                                    </div>
+                                    <p className="text-xs text-slate-600 leading-relaxed">{feature.description}</p>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="mt-8 p-6 bg-white/50 backdrop-blur-sm rounded-2xl border border-white/20">
-                            <div className="flex items-center space-x-3 mb-3">
-                                <Shield size={20} className="text-blue-600" />
-                                <span className="font-semibold text-gray-900">Trusted by 10,000+ users</span>
+                        {/* Social Proof */}
+                        <div className="p-6 bg-white/70 backdrop-blur-sm rounded-3xl border border-white/50 shadow-lg">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center space-x-2">
+                                    <div className="flex -space-x-2">
+                                        {[1, 2, 3, 4].map((i) => (
+                                            <div key={i} className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full border-2 border-white flex items-center justify-center">
+                                                <span className="text-white text-xs font-bold">{String.fromCharCode(64 + i)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="ml-3">
+                                        <p className="font-semibold text-slate-900">15,000+ users</p>
+                                        <p className="text-sm text-slate-600">trust MoneySplit daily</p>
+                                    </div>
+                                </div>
                             </div>
-                            <p className="text-sm text-gray-600">
-                                Your financial data is encrypted and secure. We never share your information with third parties.
-                            </p>
+                            <div className="flex items-center space-x-1 text-yellow-500">
+                                {[1, 2, 3, 4, 5].map((i) => (
+                                    <svg key={i} className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                ))}
+                                <span className="ml-2 text-sm font-medium text-slate-700">4.9/5 rating</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Right Side - Auth Form */}
-                <div className="w-full max-w-md mx-auto text-black">
-                    <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-8">
+                <div className="w-full max-w-md mx-auto">
+                    <div className="bg-white/80 text-black backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-8">
+                        {/* Form Header */}
                         <div className="text-center mb-8">
-                            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                {isLogin ? <Lock size={28} className="text-white" /> : <User size={28} className="text-white" />}
+                            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                                {isLogin ? 
+                                    <Lock size={32} className="text-white" /> : 
+                                    <User size={32} className="text-white" />
+                                }
                             </div>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                                {isLogin ? 'Welcome Back' : 'Create Account'}
-                            </h2>
-                            <p className="text-gray-600">
-                                {isLogin ? 'Sign in to your account to continue' : 'Join thousands of users managing shared expenses'}
+                            <h3 className="text-3xl font-bold text-slate-900 mb-3">
+                                {isLogin ? 'Welcome Back!' : 'Join MoneySplit'}
+                            </h3>
+                            <p className="text-slate-600">
+                                {isLogin ? 'Sign in to continue managing your expenses' : 'Create your account and start splitting bills'}
                             </p>
                         </div>
 
+                        {/* Error Display */}
                         {error && (
-                            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-                                <p className="text-red-700 text-sm">{error}</p>
+                            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl">
+                                <p className="text-red-700 text-sm font-medium">{error}</p>
                             </div>
                         )}
 
+                        {/* Auth Form */}
                         <form className="space-y-6" onSubmit={isLogin ? handleLogin : handleSignup}>
                             {!isLogin && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-semibold text-slate-700">
                                         Full Name
                                     </label>
                                     <div className="relative">
-                                        <User size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                        <User size={18} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
                                         <input
                                             type="text"
                                             placeholder="Enter your full name"
                                             value={fullName}
                                             onChange={(e) => setFullName(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                            className="w-full pl-12 pr-4 py-4 bg-white/50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder:text-slate-400"
                                             required
                                         />
                                     </div>
                                 </div>
                             )}
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-slate-700">
                                     Email Address
                                 </label>
                                 <div className="relative">
-                                    <Mail size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                    <Mail size={18} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
                                     <input
                                         type="email"
                                         placeholder="Enter your email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                        className="w-full pl-12 pr-4 py-4 bg-white/50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder:text-slate-400"
                                         required
                                     />
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-slate-700">
                                     Password
                                 </label>
                                 <div className="relative">
-                                    <Lock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                    <Lock size={18} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         placeholder="Enter your password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                        className="w-full pl-12 pr-12 py-4 bg-white/50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder:text-slate-400"
                                         required
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors duration-200"
                                     >
                                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
                             </div>
 
+                            {/* Submit Button */}
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+                                className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white py-4 rounded-2xl font-semibold hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-3"
                             >
                                 {loading ? (
                                     <>
@@ -275,27 +327,35 @@ const AuthPage = () => {
                             </button>
                         </form>
 
-                        <div className="my-6">
+                        {/* Divider */}
+                        <div className="my-8">
                             <div className="relative">
                                 <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-gray-200"></div>
+                                    <div className="w-full border-t border-slate-200"></div>
                                 </div>
                                 <div className="relative flex justify-center text-sm">
-                                    <span className="px-4 bg-white text-gray-500">or</span>
+                                    <span className="px-4 bg-white/80 text-slate-500 font-medium">or continue with</span>
                                 </div>
                             </div>
                         </div>
 
+                        {/* Google OAuth Button */}
                         <button
-                            className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 py-3 rounded-xl hover:border-blue-300 hover:bg-blue-50 text-gray-700 font-medium transition-all duration-200 group"
-                            onClick={() => alert('Google login not implemented yet')}
+                            className="w-full flex items-center justify-center gap-4 border-2 border-slate-200 py-4 rounded-2xl hover:border-blue-300 hover:bg-blue-50 text-slate-700 font-semibold transition-all duration-300 group hover:shadow-md"
+                            onClick={() => signIn('google', { callbackUrl: '/' })}
                         >
-                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+                            <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
                             Continue with Google
                         </button>
 
+                        {/* Toggle Mode */}
                         <div className="mt-8 text-center">
-                            <p className="text-gray-600">
+                            <p className="text-slate-600">
                                 {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
                                 <button
                                     onClick={toggleMode}
@@ -306,12 +366,13 @@ const AuthPage = () => {
                             </p>
                         </div>
 
+                        {/* Terms */}
                         <div className="mt-6 text-center">
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-slate-500">
                                 By continuing, you agree to our{' '}
-                                <a href="#" className="text-blue-600 hover:underline">Terms of Service</a>
+                                <a href="#" className="text-blue-600 hover:underline font-medium">Terms of Service</a>
                                 {' '}and{' '}
-                                <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a>
+                                <a href="#" className="text-blue-600 hover:underline font-medium">Privacy Policy</a>
                             </p>
                         </div>
                     </div>

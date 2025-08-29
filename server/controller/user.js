@@ -68,7 +68,17 @@ const loginUser = async (req, res) => {
             },
         });
 
-        if (!user || !user.password || !(await bcrypt.compare(password, user.password))) {
+        if (!user) {
+            return res.status(401).json({ error: "Invalid email or password" });
+        }
+
+        // Check if user is an OAuth user (no password)
+        if (!user.password) {
+            return res.status(401).json({ error: "This account was created with Google. Please use Google Sign-In." });
+        }
+
+        // Verify password
+        if (!(await bcrypt.compare(password, user.password))) {
             return res.status(401).json({ error: "Invalid email or password" });
         }
 
@@ -208,6 +218,93 @@ const deleteBills = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 }
+const handleGoogleAuth = async (req, res) => {
+    const { email, name, image, providerId } = req.body;
+    console.log(`Handling Google OAuth for email: ${email}, name: ${name}`);
+    if (!email || !name) {
+        return res.status(400).json({ error: "Email and name are required" });
+    }
+
+    try {
+        // Check if user already exists
+        let user = await prisma.user.findUnique({
+            where: { email },
+            include: {
+                adminGroups: true,
+                groups: true,
+                bills: true,
+            },
+        });
+
+        if (user) {
+            // User exists, update OAuth info if needed
+            if (!user.provider || user.provider !== 'google') {
+                user = await prisma.user.update({
+                    where: { email },
+                    data: {
+                        provider: 'google',
+                        providerId: providerId || null,
+                        image: image || user.image,
+                    },
+                    include: {
+                        adminGroups: true,
+                        groups: true,
+                        bills: true,
+                    },
+                });
+            }
+        } else {
+            // Create new user
+            user = await prisma.user.create({
+                data: {
+                    name,
+                    email,
+                    image,
+                    provider: 'google',
+                    providerId: providerId || null,
+                },
+                include: {
+                    adminGroups: true,
+                    groups: true,
+                    bills: true,
+                },
+            });
+        }
+
+        // Generate JWT token
+        if (!process.env.JWT_SECRET) {
+            console.error("JWT_SECRET not defined in environment variables");
+            return res.status(500).json({ error: "Internal server error" });
+        }
+
+        const tokenPayload = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            isAdmin: user.isAdmin,
+            adminGroups: user.adminGroups,
+            userGroups: user.groups,
+            groups: user.groups,
+            bills: user.bills,
+        };
+
+        const token = jwt.sign(tokenPayload, process.env.JWT_SECRET);
+
+        const { password: _, ...safeUser } = user;
+
+        res.json({ 
+            message: "Google authentication successful", 
+            token, 
+            user: safeUser,
+            userId: user.id 
+        });
+
+    } catch (error) {
+        console.error("Error handling Google OAuth:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
 module.exports = {
     createUser,
     getUser,
@@ -217,5 +314,6 @@ module.exports = {
     loginUser,
     createBills,
     deleteBills,
-    splitBillAmongUsers
+    splitBillAmongUsers,
+    handleGoogleAuth
 };

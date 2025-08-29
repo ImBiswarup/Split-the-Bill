@@ -1,17 +1,21 @@
 'use client';
 
-import { getCookie } from 'cookies-next';
+import { getCookie, deleteCookie } from 'cookies-next';
 import { createContext, useContext, useState, useEffect } from 'react';
-
-const AppContext = createContext(null);
+import { useSession, signOut } from 'next-auth/react';
 import { jwtDecode } from "jwt-decode";
 import axios from 'axios';
+
+const AppContext = createContext(null);
 
 export const AppProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [userData, setUserData] = useState([]);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [authMethod, setAuthMethod] = useState(null); // 'jwt' or 'oauth'
+
+    const { data: session, status } = useSession();
 
     const getUserFromToken = () => {
         try {
@@ -20,16 +24,15 @@ export const AppProvider = ({ children }) => {
                 const decoded = jwtDecode(token);
                 setUser(decoded);
                 setIsLoggedIn(true);
+                setAuthMethod('jwt');
                 return decoded;
-            } else {
-                setUser(null);
-                setIsLoggedIn(false);
-                return null;
             }
+            // If there's no JWT token, do NOT reset state here.
+            // This avoids wiping out an active OAuth session during client navigation.
+            return null;
         } catch (error) {
             console.error('Error decoding token:', error);
-            setUser(null);
-            setIsLoggedIn(false);
+            // On decode error, avoid clearing existing session-derived state.
             return null;
         }
     };
@@ -37,6 +40,7 @@ export const AppProvider = ({ children }) => {
     const getUserData = async (id) => {
         try {
             const res = await axios.get(`/api/users/${id}`);
+            console.log('Fetched user data:', res.data);
             setUserData(res.data);
             return res.data;
         } catch (error) {
@@ -45,22 +49,53 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+    // Handle NextAuth session changes
+    useEffect(() => {
+        if (status === 'loading') return;
+
+        if (session?.user) {
+            setUser(session.user);
+            setIsLoggedIn(true);
+            setAuthMethod('oauth');
+            setIsLoading(false);
+        } else if (status === 'unauthenticated') {
+            // Check for JWT token if no OAuth session
+            const jwtUser = getUserFromToken();
+            if (!jwtUser) {
+                setUser(null);
+                setIsLoggedIn(false);
+                setAuthMethod(null);
+                setIsLoading(false);
+            }
+        }
+    }, [session, status]);
+
     // Auto-load user data when component mounts
     useEffect(() => {
-        const initializeUser = () => {
+        if (status === 'loading') return;
+
+        if (!session?.user) {
             const userData = getUserFromToken();
             setIsLoading(false);
-        };
+        }
+    }, [session, status]);
 
-        initializeUser();
-    }, []);
-
-    const logout = () => {
-        // Clear cookies and reset state
-        document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    const logout = async () => {
+        if (authMethod === 'oauth') {
+            // Sign out from NextAuth
+            await signOut({ callbackUrl: '/' });
+        } else {
+            // Clear JWT cookies and reset state
+            deleteCookie('token');
+            deleteCookie('userId');
+        }
+        
         setUser(null);
         setUserData([]);
         setIsLoggedIn(false);
+        setAuthMethod(null);
+        
+        // Redirect to home
         window.location.href = '/';
     };
 
@@ -74,7 +109,9 @@ export const AppProvider = ({ children }) => {
             getUserData,
             userData,
             isLoading,
-            logout
+            logout,
+            authMethod,
+            session
         }}>
             {children}
         </AppContext.Provider>

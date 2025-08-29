@@ -5,12 +5,14 @@ const { createUser,
     deleteUser, getAllUsers, loginUser, 
     createBills,
     deleteBills,
-    splitBillAmongUsers} = require('../controller/user');
+    splitBillAmongUsers,
+    handleGoogleAuth } = require('../controller/user');
 
 router.post('/create', createUser);
 router.get('/all', getAllUsers);
 router.get('/:id', getUser);
 router.post('/login', loginUser);
+router.post('/auth/google', handleGoogleAuth);
 router.put('/update/:id', updateUser);
 router.delete('/delete/:id', deleteUser);
 

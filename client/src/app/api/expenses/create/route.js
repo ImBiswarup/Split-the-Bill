@@ -5,7 +5,7 @@ export async function POST(request) {
     const { amount, description } = await request.json();
     console.log(`Creating expense with data:`, { amount, description });
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        const apiUrl =  process.env.NEXT_PUBLIC_API_URL;
         const res = await axios.post(`${apiUrl}/api/expenses/create`, { amount, description });
         return NextResponse.json(res.data, { status: 201 });
     } catch (error) {

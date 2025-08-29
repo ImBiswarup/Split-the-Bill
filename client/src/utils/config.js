@@ -1,7 +1,7 @@
 // Configuration utility for the application
 export const config = {
   // API Configuration
-  apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+  apiUrl:  process.env.NEXT_PUBLIC_API_URL,
   
   // App Configuration
   appName: process.env.NEXT_PUBLIC_APP_NAME || 'MoneySplit',

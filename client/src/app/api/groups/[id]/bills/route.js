@@ -14,7 +14,7 @@ export async function POST(req, { params }) {
     try {
         console.log(`Creating group bill with payload:`, { groupId, ownerId, amount: parsedAmount, description });
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        const apiUrl =  process.env.NEXT_PUBLIC_API_URL;
         const res = await axios.post(`${apiUrl}/api/groups/${groupId}/bills`, {
             ownerId,
             amount: parsedAmount,

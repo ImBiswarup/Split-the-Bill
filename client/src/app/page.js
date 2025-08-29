@@ -5,10 +5,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { ArrowRight, CheckCircle, Users, CreditCard, TrendingUp, Shield, Zap } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 export default function Home() {
   const { isLoggedIn, user, getUserFromToken } = useAppContext();
-  
+  const { data: session } = useSession();
+
   useEffect(() => {
     getUserFromToken();
   }, []);
@@ -72,19 +74,19 @@ export default function Home() {
               <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
               Trusted by 10,000+ users worldwide
             </div>
-            
+
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight mb-6">
               Split Expenses
               <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Like a Pro
               </span>
             </h1>
-            
+
             <p className="text-xl sm:text-2xl text-gray-600 max-w-3xl mx-auto mb-10 leading-relaxed">
-              Stop arguing over who owes what. Track group expenses, settle up instantly, 
+              Stop arguing over who owes what. Track group expenses, settle up instantly,
               and maintain perfect financial harmony with friends, family, and roommates.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               {!isLoggedIn && (
                 <Link
@@ -95,7 +97,7 @@ export default function Home() {
                   <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform duration-200" />
                 </Link>
               )}
-              
+
               <Link
                 href="#features"
                 className="group border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl text-lg font-semibold hover:border-blue-500 hover:text-blue-600 transition-all duration-300 inline-flex items-center"
@@ -119,7 +121,7 @@ export default function Home() {
               Powerful features designed to make expense splitting effortless and transparent
             </p>
           </div>
-          
+
           <div className="grid gap-8 md:grid-cols-3">
             {features.map((feature, index) => {
               const Icon = feature.icon;
@@ -148,7 +150,7 @@ export default function Home() {
               Our streamlined process makes expense management effortless
             </p>
           </div>
-          
+
           <div className="grid gap-8 md:grid-cols-3">
             {steps.map((step, index) => {
               const Icon = step.icon;
@@ -180,10 +182,10 @@ export default function Home() {
                 Why Choose MoneySplit?
               </h2>
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                Join thousands of users who have simplified their shared expenses and 
+                Join thousands of users who have simplified their shared expenses and
                 eliminated financial stress from their relationships.
               </p>
-              
+
               <div className="grid gap-4">
                 {benefits.map((benefit, index) => (
                   <div key={index} className="flex items-center space-x-3">
@@ -193,7 +195,7 @@ export default function Home() {
                 ))}
               </div>
             </div>
-            
+
             <div className="relative">
               <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-8 text-white">
                 <div className="text-center">
@@ -226,7 +228,7 @@ export default function Home() {
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
             Join thousands of users who have already transformed how they handle group finances
           </p>
-          
+
           {!isLoggedIn ? (
             <Link
               href="/auth"
@@ -262,7 +264,7 @@ export default function Home() {
                 The smartest way to split expenses with friends, family, and roommates.
               </p>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-4">Product</h3>
               <ul className="space-y-2 text-gray-400">
@@ -271,7 +273,7 @@ export default function Home() {
                 <li><a href="#" className="hover:text-white transition-colors">API</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-gray-400">
@@ -280,7 +282,7 @@ export default function Home() {
                 <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-gray-400">
@@ -290,7 +292,7 @@ export default function Home() {
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
             <p>&copy; {new Date().getFullYear()} MoneySplit. All rights reserved.</p>
           </div>

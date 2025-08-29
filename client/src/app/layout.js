@@ -2,6 +2,7 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 import Navbar from '@/components/Navbar'
 import { AppProvider } from '@/context/AppContext'
+import { Providers } from '@/components/providers'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -36,12 +37,14 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${inter.className} antialiased`}>
-        <AppProvider>
-          <Navbar />
-          <main className="min-h-screen">
-            {children}
-          </main>
-        </AppProvider>
+        <Providers>
+          <AppProvider>
+            <Navbar />
+            <main className="min-h-screen">
+              {children}
+            </main>
+          </AppProvider>
+        </Providers>
       </body>
     </html>
   )
